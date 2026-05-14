@@ -1,121 +1,164 @@
-class User:
+class RomanNumber:
     """
-    Represents a website user.
-
-    Attributes:
-        id (int): Unique user ID.
-        nick_name (str): User's nickname.
-        first_name (str): User's first name.
-        last_name (str, optional): User's last name.
-        middle_name (str, optional): User's middle name.
-        gender (str, optional): User's gender.
+    Represents a Roman numeral and provides functionality to
+    validate and convert it to its decimal (Arabic) equivalent.
     """
 
-    def __init__(self, id, nick_name, first_name, last_name=None, middle_name=None, gender=None):
+    roman_values = {
+        'I': 1,
+        'V': 5,
+        'X': 10,
+        'L': 50,
+        'C': 100,
+        'D': 500,
+        'M': 1000
+    }
+
+    def __init__(self, rom_value):
         """
-        Initialize a User instance.
+        Initialize a new RomanNumber instance with the given Roman numeral string.
+        If the string is not a valid Roman numeral, sets the value to None.
 
         Args:
-            id (int): Unique user ID.
-            nick_name (str): User's nickname.
-            first_name (str): User's first name.
-            last_name (str, optional): User's last name. Defaults to None.
-            middle_name (str, optional): User's middle name. Defaults to None.
-            gender (str, optional): User's gender. Defaults to None.
+            rom_value (str): The Roman numeral as a string.
         """
-        self.id = id
-        self.nick_name = nick_name
-        self.first_name = first_name
-        self.last_name = last_name
-        self.middle_name = middle_name
-        self.gender = gender
+        if self.is_roman(rom_value):
+            self.rom_value = rom_value
+        else:
+            print("ошибка")  # Consider changing to an exception for production
+            self.rom_value = None
 
-
-    def update(self, id='', nick_name='', first_name='', last_name='', middle_name='', gender=''):
+    def decimal_number(self):
         """
-        Update user attributes with provided values.
-
-        Only attributes with non-None arguments will be updated.
-
-        Args:
-            id (int, optional): New user ID.
-            nick_name (str, optional): New nickname.
-            first_name (str, optional): New first name.
-            last_name (str, optional): New last name.
-            middle_name (str, optional): New middle name.
-            gender (str, optional): New gender.
-        """
-        if id != '':
-            self.id = id
-        if nick_name != '':
-            self.nick_name = nick_name
-        if first_name != '':
-            self.first_name = first_name
-        if last_name != '':
-            self.last_name = last_name
-        if middle_name != '':
-            self.middle_name = middle_name
-        if gender != '':
-            self.gender = gender
-
-
-    def full_name(self):
-        """
-        Construct and return full name by concatenating last name, first name, and middle name.
+        Converts the Roman numeral represented by this instance to its decimal value.
+        Returns None if the Roman numeral is invalid.
 
         Returns:
-            str: Full name with parts separated by spaces. Missing parts are skipped.
+            int or None: The decimal (Arabic) value or None if the numeral is invalid.
         """
-        parts = [self.last_name, self.first_name, self.middle_name]
-        return " ".join(part for part in parts if part)
+        if self.rom_value is None:
+            return None
 
+        total = 0
+        prev_val = 0
+
+        for ch in reversed(self.rom_value):
+            cur_val = self.roman_values[ch]
+
+            if cur_val < prev_val:
+                total -= cur_val
+            else:
+                total += cur_val
+
+            prev_val = cur_val
+
+        return total
+
+    @staticmethod
+    def is_roman(val):
+        """
+        Checks whether a given string is a valid Roman numeral
+        according to traditional rules.
+
+        Args:
+            val (str): The string to be checked.
+
+        Returns:
+            bool: True if the string represents a valid Roman numeral, False otherwise.
+        """
+        if not isinstance(val, str) or len(val) == 0:
+            return False
+
+        allowed = set('IVXLCDM')
+        if not all(ch in allowed for ch in val):
+            return False
+
+        for sym in ['V', 'L', 'D']:
+            if sym * 2 in val:
+                return False
+
+        for sym in ['I', 'X', 'C', 'M']:
+            if sym * 4 in val:
+                return False
+
+        invalid_patterns = [
+            'VX', 'VL', 'VC', 'VD', 'VM',
+            'IL', 'IC', 'ID', 'IM',
+            'XD', 'XM',
+            'LC', 'LM',
+            'DM'
+        ]
+
+        for ptrn in invalid_patterns:
+            if ptrn in val:
+                return False
+
+        subtractive = ['IV', 'IX', 'XL', 'XC', 'CD', 'CM']
+        for combo in subtractive:
+            if val.count(combo) > 1:
+                return False
+
+        roman_vals = RomanNumber.roman_values
+        prev_val = float('inf')
+        pos = 0
+        length = len(val)
+
+        while pos < length:
+            if pos + 1 < length and roman_vals[val[pos]] < roman_vals[val[pos + 1]]:
+                cur_val = roman_vals[val[pos + 1]] - roman_vals[val[pos]]
+                if roman_vals[val[pos + 1]] > 10 * roman_vals[val[pos]]:
+                    return False
+                pos += 2
+            else:
+                cur_val = roman_vals[val[pos]]
+                pos += 1
+
+            if cur_val > prev_val:
+                return False
+
+            prev_val = cur_val
+
+        return True
 
     def __str__(self):
         """
-        Return string representation of the user.
-
-        Format:
-        ID: {id} LOGIN: {nick_name} NAME: {full_name} [GENDER: {gender}]
-
-        The "GENDER: ..." part is included only if gender is present.
+        Returns the standard string representation of the Roman numeral.
+        Returns 'None' if the value is not set or invalid.
 
         Returns:
-            str: User info string.
+            str: The Roman numeral as a string, or 'None'.
         """
-        gender_part = f" GENDER: {self.gender}" if self.gender else ""
-        return (f"ID: {self.id} "
-                f"LOGIN: {self.nick_name} "
-                f"NAME: {self.full_name()}"
-                f"{gender_part}")
+        if self.rom_value is None:
+            return "None"
+        return self.rom_value
+
+    def __repr__(self):
+        """
+        Returns a detailed string representation suitable for debugging.
+
+        Returns:
+            str: A representation indicating the Roman numeral or None.
+        """
+        if self.rom_value is None:
+            return "None"
+        return f"{self.rom_value}"
 
 
 
-
-user_1 = User(12, 'alex', 'Алексей')
-print(user_1)
-
-user_2 = User(44, 'andru', 'Андрей', 'Петров')
-print(user_2)
-
-user_3 = User(25, 'nik', 'Николай', 'Иванов', 'Федорович')
-print(user_3)
-
-user_4 = User(61, 'ivan', 'Денис', 'Сидоров', 'Алексеевич', 'M')
-print(user_4)
-
-user_5 = User(47, 'ann', 'Анна', gender='F')
-print(user_5)
-
-user_4.update(0, '', 'Ваня')
-print(user_4)
-
-user_3.update(15, '', 'Никита', '', 'Петрович')
-print(user_3)
-
-users = []
-users.append(user_2.nick_name)
-users.append(user_4.nick_name)
-users.append(user_5.nick_name)
-users.append(user_1.nick_name)
-users.append(user_3.nick_name)
-print(users)
+num_1 = RomanNumber('VI')
+print(num_1.rom_value)
+print(num_1.decimal_number())
+print(num_1)
+num_2 = RomanNumber('IIII')
+print(num_2.rom_value)
+num_3 = RomanNumber('XXIV')
+print(num_3.decimal_number())
+num_4 = RomanNumber('QER2')
+nums = []
+nums.append(num_1)
+nums.append(num_2)
+nums.append(num_3)
+nums.append(num_4)
+print(nums)
+print(RomanNumber.is_roman('MMMCMLXXXVI'))
+print(RomanNumber.is_roman('MMМMMLXXXVI'))
